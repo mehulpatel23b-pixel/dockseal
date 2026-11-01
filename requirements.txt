@@ -1,0 +1,3 @@
+# dockseal runs on the Python 3.9+ standard library alone.
+# This file exists so the project is directly pip-installable and so that
+# the zero-dependency constraint stays machine-checkable in CI. Keep it empty.

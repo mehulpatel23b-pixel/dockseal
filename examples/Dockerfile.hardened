@@ -1,0 +1,25 @@
+# examples/Dockerfile.hardened -- the audit-clean reference build.
+# Multi-stage, digest-pinned base, non-root user, HEALTHCHECK.
+# Expected audit: PASS score 0 (A+).
+
+FROM python:3.12-slim@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef AS builder
+
+WORKDIR /build
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:3.12-slim@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+WORKDIR /app
+COPY --from=builder /build /app
+
+RUN useradd --create-home --shell /usr/sbin/nologin appuser \
+    && chown -R appuser:appuser /app
+
+# secrets and context noise blocked by the neighbouring .dockerignore
+USER appuser
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["python", "/app/main.py"]

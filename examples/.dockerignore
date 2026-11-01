@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials.json
+node_modules
+__pycache__
+*.pyc
+.venv
+venv
+dist
+build

